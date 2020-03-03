@@ -35,13 +35,4 @@ class HtmlWriter:
             if lineno<lenth-1:
                 f2.write('<a href="%d.html">下一章</a>'%(lineno+1))
             f2.write("</body></html")
-            
-def main():
-    if len(sys.argv)!=2:
-        sys.stderr.write("Usage: %s book_name"%sys.argv[0])
-        raise SystemExit
-    else:
-        HtmlWriter(sys.argv[1]).work()
 
-if __name__=="__main__":
-    main()

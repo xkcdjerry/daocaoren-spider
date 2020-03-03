@@ -23,16 +23,23 @@ q=0.5,en-US;q=0.3,en;q=0.2",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:73.0) \
 Gecko/20100101 Firefox/73.0"}
 
-#速度：狼图腾：39章，8.18章每秒
-#      终极斗罗：918章，12.94章每秒
+#最快速度：狼图腾：39章，8.18章每秒
+#          终极斗罗：918章，19.52章每秒
 def get(url):
     if url.startswith("https://"):
         url = url[8:]
     elif url.startswith("http://"):
         url = url[7:]
     url = "http://" + url.lstrip("/")
-    req = requests.get(url,headers=FIREFOXHEADERS)
-    req.raise_for_status()
+    while True:
+        try:
+            req = requests.get(url,headers=FIREFOXHEADERS)
+            req.raise_for_status()
+        except requests.exceptions.BaseHTTPError:
+            pass
+        else:
+            # 下载好了
+            break
     req.encoding = 'utf-8'
     return req.text
 
@@ -53,10 +60,9 @@ class Parser:
 
 
 class Spider:
-    def __init__(self, name, foldname):
+    def __init__(self, name):
         self.base_url = "www.daocaorenshuwu.com/book/%s/" % name
         self.name = name
-        self.foldname = foldname
         self.p = Parser(self.base_url)
         self.lock=threading.Lock()
 
@@ -64,7 +70,7 @@ class Spider:
         soup = getsoup(url)
         with open("files/%s.txt" % name, "w", encoding="utf-8") as f:
             # 写第一页
-            writecontent(soup, f)
+            write_content(soup, f)
 
             # 选择出里面的页面列表
             pages = soup.select_one('ul[class="pagination pagination-sm"]')
@@ -72,14 +78,14 @@ class Spider:
             # 选择并写除了第一页之外的每一页
             for i in pages.select("li a[href]"):
                 f.write("\n\n")
-                writecontent(getsoup("%s%s" % (self.base_url, i.get("href"))),
-                             f)
+                write_content(getsoup("%s%s" % (self.base_url, i.get("href"))),
+                              f)
         
         with self.lock:
             print("已下载 %s" % name)
     def init(self):
-        os.makedirs(self.foldname + '/text', exist_ok=True)
-        os.chdir(self.foldname + "/text")
+        os.makedirs(self.name + '/text', exist_ok=True)
+        os.chdir(self.name + "/text")
         os.makedirs("files",exist_ok=True)
     def work(self):
         threads=[]
@@ -120,18 +126,3 @@ def remove_spam(tag):
     for i in tag.findChildren():
         i.extract()  # 把干扰项删掉
 
-
-def main():
-    if len(sys.argv)==1 or len(sys.argv)>3:
-        sys.stderr.write("Usage: %s book_name [folder_name]"%sys.argv[0])
-        raise SystemExit
-    elif len(sys.argv)==2:
-        Spider(sys.argv[1],sys.argv[1]).spider()
-    elif len(sys.argv)==3:
-        Spider(sys.argv[1],sys.argv[2]).spider()
-    else:
-        assert False,"Unreachable"
-
-
-if __name__ == "__main__":
-    main()
