@@ -1,2 +1,3 @@
 # daocaoren-spider
-spiders the Daocaoren Bookshelf
+Spiders the Daocaoren Bookshelf using HTTP.
+(www.daocaorenshuwu.com)
